@@ -36,6 +36,18 @@ Load `dist/` via chrome://extensions -> Developer mode -> Load unpacked.
    to `CookieRecord`; a unit test asserts the serialised record has no value.
 5. Honesty rule: never output "safe"/"dangerous"/trust scores; always distinguish
    observed vs inferred vs unknown; always list what could not be inspected.
+6. **General safety knowledge that no browser API can observe lives in
+   `src/features/safety-coach/toolkit.ts`** ("Know the Web" view), never in the
+   cookie/permission pipeline. Keep page-specific reporting strictly evidence-based.
+
+## Design system
+
+- Aesthetic: warm "field kit" — cream paper, ink outlines, hard offset shadows,
+  a single coral accent. Tokens are all in `src/styles/global.css` (`--ww-*`).
+- Fonts (Fraunces + Nunito) come from `@fontsource-variable` and are bundled into
+  `dist/assets/`; never load fonts from a remote URL.
+- Add motion for feedback only, and always keep the `prefers-reduced-motion`
+  block at the bottom of `global.css` intact.
 
 ## Conventions
 

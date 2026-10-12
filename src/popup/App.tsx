@@ -6,13 +6,15 @@ import { OverviewView } from '../features/overview/OverviewView';
 import { CookieDetectiveView } from '../features/cookies/CookieDetectiveView';
 import { PermissionGuideView } from '../features/permissions/PermissionGuideView';
 import { SafetyCoachView } from '../features/safety-coach/SafetyCoachView';
-import { ShieldLogo, IconHome, IconCookie, IconKey, IconCompass, IconRefresh } from './components/Icons';
+import { ToolkitView } from '../features/learn/ToolkitView';
+import { ShieldLogo, IconHome, IconCookie, IconKey, IconCompass, IconBook, IconRefresh } from './components/Icons';
 
 const NAV: { id: ViewId; label: string; icon: ReactElement }[] = [
-  { id: 'overview', label: 'Overview', icon: <IconHome size={17} /> },
-  { id: 'cookies', label: 'Cookies', icon: <IconCookie size={17} /> },
-  { id: 'permissions', label: 'Permissions', icon: <IconKey size={17} /> },
-  { id: 'coach', label: 'Coach', icon: <IconCompass size={17} /> },
+  { id: 'overview', label: 'Overview', icon: <IconHome size={18} /> },
+  { id: 'cookies', label: 'Cookies', icon: <IconCookie size={18} /> },
+  { id: 'permissions', label: 'Perms', icon: <IconKey size={18} /> },
+  { id: 'coach', label: 'Coach', icon: <IconCompass size={18} /> },
+  { id: 'learn', label: 'Learn', icon: <IconBook size={18} /> },
 ];
 
 interface LoadState {
@@ -60,7 +62,6 @@ export function App(): ReactElement {
     setState((s) => ({ ...s, context }));
 
     if (context.kind !== 'web' || tabId === undefined) {
-      // Nothing to inspect. Resolve the loading state immediately.
       setState((s) => ({
         ...s,
         cookieReport: null,
@@ -82,8 +83,7 @@ export function App(): ReactElement {
       permissionReport: permissionResult.status === 'fulfilled' ? permissionResult.value : null,
       cookiesLoading: false,
       permissionsLoading: false,
-      cookiesError:
-        cookieResult.status === 'rejected' ? toMessage(cookieResult.reason) : null,
+      cookiesError: cookieResult.status === 'rejected' ? toMessage(cookieResult.reason) : null,
       permissionsError:
         permissionResult.status === 'rejected' ? toMessage(permissionResult.reason) : null,
     }));
@@ -94,6 +94,7 @@ export function App(): ReactElement {
   }, [load]);
 
   const context = state.context;
+  const busy = state.cookiesLoading || state.permissionsLoading;
 
   return (
     <div className="ww-app">
@@ -103,23 +104,21 @@ export function App(): ReactElement {
 
       <header className="ww-header">
         <div className="ww-header__brand">
-          <ShieldLogo size={26} />
-          <div className="ww-header__titles">
-            <div className="ww-header__name">WebWise</div>
-            <div className="ww-header__tagline">Understand the web. Browse with confidence.</div>
-          </div>
+          <ShieldLogo size={30} />
+        </div>
+        <div className="ww-header__titles">
+          <div className="ww-header__name">WebWise</div>
+          <div className="ww-header__tagline">Understand the web. Browse with confidence.</div>
         </div>
         <button
           type="button"
-          className="ww-header__refresh"
+          className={`ww-header__refresh${busy ? ' ww-header__refresh--spin' : ''}`}
           onClick={() => void load()}
-          disabled={state.cookiesLoading || state.permissionsLoading}
+          disabled={busy}
           aria-label="Run the checks again"
         >
-          <span className="ww-row" style={{ gap: 5 }}>
-            <IconRefresh size={13} />
-            Refresh
-          </span>
+          <IconRefresh size={13} />
+          {busy ? 'Checking' : 'Refresh'}
         </button>
       </header>
 
@@ -129,7 +128,7 @@ export function App(): ReactElement {
             key={item.id}
             type="button"
             className="ww-nav__item"
-            aria-current={view === item.id ? 'page' : undefined}
+            aria-current={view === item.id ? 'true' : undefined}
             onClick={() => setView(item.id)}
           >
             {item.icon}
@@ -138,12 +137,14 @@ export function App(): ReactElement {
         ))}
       </nav>
 
-      <main className="ww-main" id="ww-content" tabIndex={-1}>
-        {!context ? (
+      <main className="ww-main" id="ww-content" tabIndex={-1} key={view}>
+        {view === 'learn' ? (
+          <ToolkitView />
+        ) : !context ? (
           <div className="ww-stack">
             <div className="ww-skeleton" style={{ height: 20, width: '60%' }} />
-            <div className="ww-skeleton" style={{ height: 90 }} />
-            <div className="ww-skeleton" style={{ height: 90 }} />
+            <div className="ww-skeleton" style={{ height: 96 }} />
+            <div className="ww-skeleton" style={{ height: 96 }} />
           </div>
         ) : view === 'overview' ? (
           <OverviewView
@@ -178,8 +179,8 @@ export function App(): ReactElement {
         )}
       </main>
 
-      <footer className="ww-footnote">
-        WebWise keeps everything on your device. It is a learning tool, not a replacement for your browser’s security.
+      <footer className="ww-footnote" style={{ padding: '8px 16px 12px' }}>
+        Everything stays on your device — no tracking, no accounts.
       </footer>
     </div>
   );

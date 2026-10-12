@@ -27,7 +27,7 @@ Open a normal `https://` site you are happy to show on screen (a news site or a 
 
 > "This is WebWise. It reads what the browser *actually* exposes for the page I'm on, and explains it. Notice it never says 'safe' or 'dangerous' — there's no trust score. Everything here is evidence."
 
-[Point at the hostname, the https pill, the cookie summary and the permission summary.]
+[Point at the hostname, the https pill, Pip the mascot, and the four quick tiles.]
 
 ## 0:35 — 1:00 · Cookie Detective
 
@@ -51,19 +51,25 @@ Open a normal `https://` site you are happy to show on screen (a news site or a 
 
 ## 1:20 — 1:45 · Safety Coach
 
-[Click **Coach**. Answer one scenario wrong on purpose, then read the feedback.]
+[Click **Coach**. Answer one scenario correctly to trigger the streak and confetti, then try another and answer it wrong on purpose to read the feedback.]
 
-> "Now the part that builds judgement. Realistic situations — a look-alike web address, a file that downloads itself, a request for a verification code. I'll pick the risky answer on purpose... see how it explains *why* that was unsafe and reveals the safer choice."
+> "Now the part that builds judgement. Realistic situations — a look-alike web address, a file that downloads itself, a request for a verification code. Watch the streak meter climb when I get one right... see how it explains *why* an answer was unsafe and reveals the safer choice."
 
 [Hover the tip card.]
 
 > "The tips underneath aren't generic — they match what we actually found on this page."
 
-[Click **Try this one again**.]
+[Click **Try again**.]
 
 > "And you can retry. This is practice, not a test."
 
-## 1:45 — 2:00 · Privacy and close
+## 1:45 — 1:52 · Know the Web
+
+[Click **Learn**. Open the "Does a padlock mean a website is safe?" question.]
+
+> "Some skills a browser simply cannot check for you — passwords, scam messages, unexpected downloads. Rather than fake a 'detection', WebWise teaches those honestly. The padlock answer, for example: a padlock means the connection is private, not that the site is trustworthy."
+
+## 1:52 — 2:00 · Privacy and close
 
 [Point at the 'Local only / No tracking' pills at the bottom of the Overview.]
 

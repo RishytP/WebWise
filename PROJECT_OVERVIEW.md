@@ -35,7 +35,7 @@ Children browse with powerful tools and almost no honest instruction. Most safet
 ## Verified status
 
 - `npm run typecheck` — passes.
-- `npm test` — 77 tests pass across 6 suites.
+- `npm test` — 83 tests pass across 7 suites.
 - `npm run build` — produces a loadable `dist/` folder.
 - `npm run test:integration` — loads the real extension into headless Chromium and confirms the worker starts, `chrome.cookies` returns real metadata, `chrome.scripting` returns a live permission state, and the popup mounts with no console errors.
 

@@ -1,12 +1,26 @@
 import { useMemo, useState, type ReactElement } from 'react';
 import type { CookieRecord, CookieReport } from '../../types';
+import { explainCookieAttributes, partyLabel, sameSiteLabel } from './cookieLogic';
 import {
-  explainCookieAttributes,
-  partyLabel,
-  sameSiteLabel,
-} from './cookieLogic';
-import { Card, Explainer, Limitations, LoadingCard, Pill, StateBlock, Stat } from '../../popup/components/Primitives';
-import { IconAlert, IconCookie, IconInfo, IconLock, IconShieldOff } from '../../popup/components/Icons';
+  Card,
+  Donut,
+  Explainer,
+  Legend,
+  Limitations,
+  LoadingCard,
+  Pill,
+  StateBlock,
+  Stat,
+} from '../../popup/components/Primitives';
+import {
+  Pip,
+  IconAlert,
+  IconChevronDown,
+  IconCookie,
+  IconInfo,
+  IconLock,
+  IconShieldOff,
+} from '../../popup/components/Icons';
 
 function formatExpiry(cookie: CookieRecord): string {
   if (cookie.session || cookie.expirationDate === null) return 'Session — ends when the browser closes';
@@ -21,29 +35,33 @@ function formatExpiry(cookie: CookieRecord): string {
   });
 }
 
-function CookieRow({ cookie }: { cookie: CookieRecord }): ReactElement {
+function CookieRow({ cookie, index }: { cookie: CookieRecord; index: number }): ReactElement {
   const [open, setOpen] = useState(false);
   const attrs = useMemo(() => explainCookieAttributes(cookie), [cookie]);
+  const third = cookie.party === 'third-party';
 
   return (
-    <div className="ww-cookie">
+    <div className="ww-reveal" style={{ animationDelay: `${index * 45}ms` }}>
       <button
         type="button"
-        className="ww-cookie__summary"
+        className={`ww-cookie${third ? ' ww-cookie--third' : ''}`}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
+        <span
+          className="ww-cookie__dot"
+          style={{ background: third ? 'var(--ww-lilac)' : 'var(--ww-teal)' }}
+          aria-hidden="true"
+        />
         <span className="ww-cookie__name">{cookie.name}</span>
-        <Pill tone={cookie.party === 'third-party' ? 'note' : 'neutral'}>{partyLabel(cookie.party)}</Pill>
+        <Pill tone={third ? 'note' : 'neutral'}>{partyLabel(cookie.party)}</Pill>
         {cookie.secure && (
-          <span title="Secure" aria-label="Secure cookie">
+          <span title="Secure cookie" aria-label="Secure cookie" style={{ display: 'grid' }}>
             <IconLock size={14} />
           </span>
         )}
         <span className="ww-cookie__chev" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9.5 6 6 6-6 6" />
-          </svg>
+          <IconChevronDown size={14} />
         </span>
       </button>
 
@@ -69,7 +87,7 @@ function CookieRow({ cookie }: { cookie: CookieRecord }): ReactElement {
             {attrs.map((a) => (
               <div className="ww-attr__item" key={a.attribute}>
                 <div className="ww-attr__head">
-                  <span>{a.attribute}</span>
+                  <span style={{ flex: 1 }}>{a.attribute}</span>
                   <Pill tone="muted">{a.state}</Pill>
                 </div>
                 <p className="ww-attr__body">{a.plain}</p>
@@ -126,20 +144,36 @@ export function CookieDetectiveView({
   }
 
   const { summary } = report;
+  const slices = [
+    { label: 'First-party', value: summary.firstParty, color: '#0fa3a3' },
+    { label: 'Third-party', value: summary.thirdParty, color: '#7c6bf0' },
+  ];
 
   return (
     <div className="ww-stack">
-      <Card
-        title="Cookie Detective"
-        subtitle={`Cookies that apply to ${report.hostname ?? 'this page'}`}
-        icon={<IconCookie size={18} />}
-        badge={`${summary.total} found`}
-      >
-        <div className="ww-stats">
-          <Stat value={summary.total} label="Total" />
-          <Stat value={summary.firstParty} label="First-party" />
-          <Stat value={summary.thirdParty} label="Third-party" />
+      <div className="ww-hero">
+        <Pip size={50} mood="curious" />
+        <div className="ww-hero__text">
+          <h1 className="ww-hero__host" style={{ fontSize: 19 }}>
+            Cookie Detective
+          </h1>
+          <p className="ww-small ww-muted" style={{ margin: '4px 0 0' }}>
+            Cookies that apply to {report.hostname ?? 'this page'}
+          </p>
         </div>
+      </div>
+
+      <Card badge={`${summary.total} found`} icon={<IconCookie size={18} />}>
+        {summary.total > 0 ? (
+          <div className="ww-row" style={{ gap: 16, alignItems: 'center' }}>
+            <Donut slices={slices} centerValue={summary.total} centerCaption="cookies" />
+            <Legend slices={slices} />
+          </div>
+        ) : (
+          <p className="ww-small ww-muted" style={{ margin: 0 }}>
+            No cookies were readable on this page.
+          </p>
+        )}
         <div className="ww-divider" />
         <div className="ww-chip-row">
           <Pill tone="good">{summary.secure} Secure</Pill>
@@ -148,6 +182,12 @@ export function CookieDetectiveView({
           <Pill tone="muted">{summary.persistent} Stored</Pill>
         </div>
       </Card>
+
+      <div className="ww-stats">
+        <Stat value={summary.total} label="Total" tone="teal" />
+        <Stat value={summary.secure} label="Secure" tone="green" />
+        <Stat value={summary.httpOnly} label="HttpOnly" tone="blue" />
+      </div>
 
       {summary.total === 0 ? (
         <StateBlock
@@ -159,11 +199,13 @@ export function CookieDetectiveView({
         <div>
           <div className="ww-row ww-row--between" style={{ marginBottom: 8 }}>
             <h2 className="ww-card__title">Cookies we could read</h2>
-            <span className="ww-small ww-muted">Tap one to learn what it does</span>
+            <span className="ww-small ww-muted">Tap to peek</span>
           </div>
-          {report.cookies.map((c, i) => (
-            <CookieRow key={`${c.name}-${c.domain}-${c.path}-${i}`} cookie={c} />
-          ))}
+          <div className="ww-stack" style={{ gap: 8 }}>
+            {report.cookies.map((c, i) => (
+              <CookieRow key={`${c.name}-${c.domain}-${c.path}-${i}`} cookie={c} index={i} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -171,10 +213,13 @@ export function CookieDetectiveView({
         <Card title="What this means" icon={<IconInfo size={18} />}>
           <div className="ww-stack">
             {report.insights.map((insight) => (
-              <div key={insight.id}>
-                <Explainer found={insight.found} meaning={insight.meaning} action={insight.action} />
-                <div className="ww-divider" />
-              </div>
+              <Explainer
+                key={insight.id}
+                tone={insight.tone === 'good' ? 'good' : insight.tone === 'note' ? 'note' : 'default'}
+                found={insight.found}
+                meaning={insight.meaning}
+                action={insight.action}
+              />
             ))}
           </div>
         </Card>

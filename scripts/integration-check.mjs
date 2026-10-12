@@ -13,10 +13,14 @@ import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PORT = 8791;
 const DEBUG_PORT = 9333;
+// Load THIS repo's build, resolved relative to the script, so the check always
+// exercises the current working tree rather than some other copy on disk.
+const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 
 const server = createServer((req, res) => {
   res.setHeader('Set-Cookie', [
@@ -82,7 +86,7 @@ try {
     '--no-sandbox',
     '--disable-gpu',
     `--user-data-dir=${profile}`,
-    '--load-extension=/workspace/project/dist',
+    `--load-extension=${DIST}`,
     `--remote-debugging-port=${DEBUG_PORT}`,
     '--remote-allow-origins=*',
     `http://127.0.0.1:${PORT}/`,

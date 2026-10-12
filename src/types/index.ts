@@ -188,4 +188,4 @@ export interface CoachScenario {
 /* Navigation                                                                 */
 /* -------------------------------------------------------------------------- */
 
-export type ViewId = 'overview' | 'cookies' | 'permissions' | 'coach';
+export type ViewId = 'overview' | 'cookies' | 'permissions' | 'coach' | 'learn';

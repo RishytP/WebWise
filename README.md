@@ -88,7 +88,17 @@ WebWise takes the opposite approach: show the real evidence, explain what it doe
 - Neutral descriptions only — no "safe", "dangerous" or numeric trust scores.
 - Restricted pages (browser internals, extension pages, the Web Store, local files) get a friendly explanation instead of a crash.
 
-### E. Extension Inspector — **documented as a future feature, not faked**
+### E. Know the Web — broader safety skills the browser cannot check
+
+The primary tools stay strictly evidence-based, so anything a browser genuinely
+cannot observe lives here instead of being faked. "Know the Web" is an accordion
+of ten real questions a child might ask — padlocks, fake addresses, strong
+passwords, login codes, pop-ups, unexpected downloads, notification requests,
+private information, prize scams and tracker cookies — each with a plain answer
+and one concrete "try this". It is clearly labelled as general learning, never as
+a finding about the current page.
+
+### F. Extension Inspector — **documented as a future feature, not faked**
 
 The stretch goal of listing and explaining other installed extensions is **not implemented**. Chrome's `chrome.management` API is powerful and its listing requires broad permissions; faking it or shipping a half-reliable version would violate the "every claim grounded in evidence" principle. It is documented in the [Roadmap](#roadmap) with a concrete implementation plan.
 
@@ -102,28 +112,51 @@ The stretch goal of listing and explaining other installed extensions is **not i
 WebWise
 Understand the web. Browse with confidence.
 Refresh
-Overview   Cookies   Permissions   Coach
+Overview   Cookies   Perms   Coach   Learn
 Extension page
-This page is off-limits to extensions — and that is a good thing
+This page is off-limits to extensions
 This page belongs to a browser extension. Extensions are not allowed to
 inspect each other's pages, so WebWise cannot look inside this one.
-What you can still do
-Open a normal website (one that starts with https://) and WebWise will show
-you its cookies and permissions.
-Try the Safety Coach instead
-WebWise keeps everything on your device. It is a learning tool, not a
-replacement for your browser's security.
+Safety Coach — Practise spotting tricks
+Know the Web — Skills to learn
+Want the full report?
+Open a normal website — one that starts with https:// — and WebWise will show
+its cookies and permissions.
+Everything stays on your device — no tracking, no accounts.
 ```
 
 Add your own screenshots here after a real session:
 
 | View | Placeholder | What to capture |
 | --- | --- | --- |
-| Overview | `docs/screenshots/overview.png` | The dashboard for a normal https site |
-| Cookie Detective | `docs/screenshots/cookies.png` | An expanded cookie with attribute explanations |
-| Permission Guide | `docs/screenshots/permissions.png` | A site with a granted and a prompt permission |
-| Safety Coach | `docs/screenshots/coach.png` | A scenario with feedback and takeaway |
+| Overview | `docs/screenshots/overview.png` | Hero with Pip, quick tiles and count-up stats for a real https site |
+| Cookie Detective | `docs/screenshots/cookies.png` | The donut ring and an expanded cookie with attribute explanations |
+| Permission Guide | `docs/screenshots/permissions.png` | Status LEDs for a granted and a prompt permission |
+| Safety Coach | `docs/screenshots/coach.png` | A scenario mid-answer with the streak meter and feedback |
+| Know the Web | `docs/screenshots/learn.png` | An open question in the learning accordion |
 | Restricted page | `docs/screenshots/restricted.png` | The friendly `chrome://` explanation |
+
+## Design and interaction
+
+The interface is deliberately **not** a dark corporate security dashboard. It uses a
+warm "field kit" aesthetic — cream paper with a faint dot grid, heavy ink outlines,
+hard offset shadows, rounded cards and a single sunny coral accent — so it feels
+tangible and friendly for an 8–13 year old without talking down to them.
+
+- **Pip**, an original animated shield mascot, reacts to state (idle, curious, happy) and
+  gives the product a face. It changes expression only from what is actually happening.
+- Motion is used for feedback, not decoration: numbers count up, the cookie donut draws
+  itself in, permission "status LEDs" pulse, correct answers pop and shake, the header
+  refresh icon spins while a real check runs, and a confetti burst celebrates a correct
+  answer.
+- Chunky labelled tabs, quick-action tiles, and labelled blocks ("What we found / What it
+  means / What you can do") keep the structure obvious.
+- Typography is distinctive and bundled locally: **Fraunces** (display) and **Nunito**
+  (body), imported from `@fontsource-variable` so the fonts ship inside `dist/` and are
+  never fetched from a remote server at runtime.
+- Accessibility: real `<button>`/`<nav>`/`<details>` elements, `aria-current` and
+  `aria-expanded` state, keyboard focus rings, a skip link, and a full
+  `prefers-reduced-motion` fallback that disables every animation.
 
 ## Architecture
 
@@ -135,8 +168,8 @@ src/
     App.tsx              Shell: header, nav, load orchestration, error states
     main.tsx             React entry point
     components/
-      Icons.tsx          Original SVG shield identity + icon set
-      Primitives.tsx     Card, Pill, Explainer, Stat, StateBlock, Loading, Limitations
+      Icons.tsx          Original SVG shield mascot (Pip) + icon set
+      Primitives.tsx     Card, Pill, Explainer, Stat/CountUp, Donut, Confetti, states
   features/
     cookies/
       cookieLogic.ts         Pure, testable: classification, summary, explanations
@@ -146,9 +179,12 @@ src/
       PermissionGuideView.tsx
     safety-coach/
       scenarios.ts           Scenario data + contextual tip engine
+      toolkit.ts             "Know the Web" general safety content (not page-specific)
       SafetyCoachView.tsx
     overview/
       OverviewView.tsx       Unified dashboard
+    learn/
+      ToolkitView.tsx        "Know the Web" accordion view
   services/
     messaging.ts         Runtime-validated popup <-> worker protocol
     browserService.ts    The popup's single privileged-call entry point
@@ -271,6 +307,7 @@ Covers:
 - Background worker report builders against a **mocked** `chrome` API: real-metadata path, empty state, thrown-error path and restricted-page path.
 - Runtime message validation.
 - Safety Coach answer validation, feedback, and contextual tip generation.
+- "Know the Web" toolkit content: shape, unique ids, a concrete action per topic, and a guard that it never claims a site is simply "safe".
 - Empty and error states, and restricted-page handling.
 
 ### Real browser integration check

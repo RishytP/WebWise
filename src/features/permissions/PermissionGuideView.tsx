@@ -1,7 +1,19 @@
 import type { ReactElement } from 'react';
 import type { PermissionFinding, PermissionReport, PermissionState } from '../../types';
 import { Card, Limitations, LoadingCard, Pill, StateBlock } from '../../popup/components/Primitives';
-import { IconAlert, IconInfo, IconKey, IconShieldOff } from '../../popup/components/Icons';
+import {
+  Pip,
+  IconAlert,
+  IconBell,
+  IconEye,
+  IconGlobe,
+  IconInfo,
+  IconKey,
+  IconPlay,
+  IconShieldOff,
+  IconUser,
+  IconWifi,
+} from '../../popup/components/Icons';
 
 function stateTone(state: PermissionState): 'good' | 'note' | 'neutral' | 'muted' {
   switch (state) {
@@ -27,35 +39,54 @@ function evidenceLabel(kind: PermissionFinding['evidence']['kind']): string {
   }
 }
 
-function PermissionRow({ finding }: { finding: PermissionFinding }): ReactElement {
+function PermissionIcon({ name }: { name: PermissionFinding['name'] }): ReactElement {
+  const size = 20;
+  switch (name) {
+    case 'geolocation':
+      return <IconGlobe size={size} />;
+    case 'camera':
+      return <IconEye size={size} />;
+    case 'microphone':
+      return <IconUser size={size} />;
+    case 'notifications':
+      return <IconBell size={size} />;
+    case 'clipboard-read':
+      return <IconPlay size={size} />;
+    case 'midi':
+      return <IconWifi size={size} />;
+    default:
+      return <IconKey size={size} />;
+  }
+}
+
+function PermissionRow({ finding, index }: { finding: PermissionFinding; index: number }): ReactElement {
   return (
-    <div className="ww-perm">
+    <div className={`ww-perm ww-perm--${finding.state}`} style={{ animationDelay: `${index * 45}ms` }}>
       <div className="ww-perm__head">
+        <span className={`ww-perm__led ww-perm__led--${finding.state}`} aria-hidden="true" />
+        <span style={{ display: 'grid', flex: 'none' }}>
+          <PermissionIcon name={finding.name} />
+        </span>
         <span className="ww-perm__label">{finding.label}</span>
         <Pill tone={stateTone(finding.state)}>{finding.stateLabel}</Pill>
-        <span style={{ marginLeft: 'auto' }}>
-          <Pill tone="muted">{evidenceLabel(finding.evidence.kind)}</Pill>
-        </span>
       </div>
 
       <p className="ww-perm__text">{finding.stateMeaning}</p>
 
-      <details>
-        <summary className="ww-linkbtn" style={{ cursor: 'pointer' }}>
-          What does this permission allow?
-        </summary>
+      <details className="ww-perm__details">
+        <summary>What does this permission allow?</summary>
         <div style={{ marginTop: 8 }}>
           <p className="ww-perm__text">{finding.whatItAllows}</p>
           <p className="ww-perm__text ww-perm__text--muted" style={{ marginBottom: 0 }}>
             <span className="ww-strong">Why a site might ask: </span>
             {finding.whyAsk}
           </p>
-          {finding.evidence.note && (
-            <p className="ww-perm__text ww-perm__text--muted" style={{ marginTop: 6, marginBottom: 0 }}>
-              <span className="ww-strong">How we know: </span>
-              {finding.evidence.note}
-            </p>
-          )}
+          <div className="ww-row" style={{ marginTop: 8 }}>
+            <Pill tone="muted">{evidenceLabel(finding.evidence.kind)}</Pill>
+            {finding.evidence.note && (
+              <span className="ww-small ww-muted">{finding.evidence.note}</span>
+            )}
+          </div>
         </div>
       </details>
     </div>
@@ -97,24 +128,39 @@ export function PermissionGuideView({
         />
         <Card title="Why this happens">
           <p className="ww-small ww-muted" style={{ margin: 0 }}>
-            Permission checks only work on normal website pages. The browser blocks extensions from running on built-in
-            pages and other extensions’ pages, which protects your privacy.
+            Permission checks only work on normal website pages. The browser blocks extensions from running on
+            built-in pages and other extensions’ pages, which protects your privacy.
           </p>
         </Card>
       </div>
     );
   }
 
+  const granted = report.findings.filter((f) => f.state === 'granted').length;
+  const promptable = report.findings.filter((f) => f.state === 'prompt').length;
+
   return (
     <div className="ww-stack">
-      <Card
-        title="Permission Guide"
-        subtitle={report.hostname ? `What ${report.hostname} can ask to use` : 'What this site can ask to use'}
-        icon={<IconKey size={18} />}
-      >
+      <div className="ww-hero">
+        <Pip size={50} mood="curious" />
+        <div className="ww-hero__text">
+          <h1 className="ww-hero__host" style={{ fontSize: 19 }}>
+            Permission Guide
+          </h1>
+          <p className="ww-small ww-muted" style={{ margin: '4px 0 0' }}>
+            What {report.hostname ?? 'this site'} can ask to use
+          </p>
+        </div>
+      </div>
+
+      <Card icon={<IconKey size={18} />}>
+        <div className="ww-chip-row">
+          <Pill tone="good">{granted} allowed</Pill>
+          <Pill tone="neutral">{promptable} can ask</Pill>
+          <Pill tone="muted">{report.findings.length} checked</Pill>
+        </div>
         <p className="ww-small ww-muted" style={{ margin: 0 }}>
-          These are statuses for the site in your active tab. A status tells you what the site is allowed to ask for —
-          it does not tell you what the site has actually done.
+          A status tells you what the site is allowed to ask for — it does not tell you what the site has actually done.
         </p>
       </Card>
 
@@ -122,9 +168,9 @@ export function PermissionGuideView({
         <StateBlock icon={<IconInfo size={24} />} title="Some checks were not available" text={report.message} />
       )}
 
-      <div>
-        {report.findings.map((f) => (
-          <PermissionRow key={f.name} finding={f} />
+      <div className="ww-stack" style={{ gap: 10 }}>
+        {report.findings.map((f, i) => (
+          <PermissionRow key={f.name} finding={f} index={i} />
         ))}
       </div>
 
@@ -138,8 +184,8 @@ export function PermissionGuideView({
           never do so.
         </p>
         <p className="ww-perm__text" style={{ marginBottom: 0 }}>
-          <span className="ww-strong">Blocked</span> means the site is not allowed to use it. If something on the page is
-          broken, this is a good place to look.
+          <span className="ww-strong">Blocked</span> means the site is not allowed to use it. If something on the page
+          is broken, this is a good place to look.
         </p>
       </Card>
 
