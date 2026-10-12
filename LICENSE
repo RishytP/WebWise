@@ -1,0 +1,43 @@
+MIT License
+
+Copyright (c) 2026 WebWise contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Why MIT?
+
+WebWise is an educational tool intended to be read, forked and adapted — by
+teachers, by other hackathon teams, and by anyone building child-safety
+software. MIT is the most permissive widely-understood licence: it lets people
+reuse the code, including commercially, with only attribution required.
+
+Alternatives considered:
+
+- **Apache-2.0** — adds an explicit patent grant, which matters for large
+  corporate codebases but adds boilerplate this project does not need.
+- **GPL-3.0** — would force downstream derivatives to stay open. That is a
+  reasonable stance, but it would stop a school or a small team from quietly
+  adapting WebWise into a proprietary classroom tool, which we would rather
+  allow.
+- **No licence** — would make the repository "all rights reserved" by default
+  and defeat the purpose of a public educational project.
+
+MIT was chosen for maximum reuse and minimum friction.
