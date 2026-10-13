@@ -1,6 +1,14 @@
 import { useMemo, useRef, useState, type ReactElement } from 'react';
 import type { CookieReport, PageContext, PermissionReport } from '../../types';
-import { SCENARIOS, contextualTips, isCorrectAnswer } from './scenarios';
+import {
+  ALL_SCENARIOS,
+  CATEGORY_LABELS,
+  buildRound,
+  contextualTips,
+  isCorrectAnswer,
+  scenarioById,
+  type CoachRound,
+} from './scenarios';
 import { Card, Confetti, Pill } from '../../popup/components/Primitives';
 import {
   Pip,
@@ -26,13 +34,20 @@ export function SafetyCoachView({
   cookieReport: CookieReport | null;
   permissionReport: PermissionReport | null;
 }): ReactElement {
+  const [round, setRound] = useState<CoachRound>(() => buildRound(null));
+  const [roundNumber, setRoundNumber] = useState(1);
   const [index, setIndex] = useState(0);
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
   const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const scenario = SCENARIOS[index];
+  const roundScenarios = useMemo(
+    () => round.scenarioIds.map((id) => scenarioById(id)).filter((s): s is NonNullable<typeof s> => Boolean(s)),
+    [round],
+  );
+  const scenario = roundScenarios[index];
   const attempt = scenario ? attempts[scenario.id] : undefined;
 
   const solved = Object.values(attempts).filter((a) => a.correct).length;
@@ -65,7 +80,11 @@ export function SafetyCoachView({
     const correct = isCorrectAnswer(scenario, answerId);
     setAttempts((prev) => ({ ...prev, [scenario.id]: { answerId, correct } }));
     if (correct) {
-      setStreak((s) => s + 1);
+      setStreak((s) => {
+        const next = s + 1;
+        setBestStreak((b) => Math.max(b, next));
+        return next;
+      });
       setCelebrate((c) => c + 1);
     } else {
       setStreak(0);
@@ -80,8 +99,16 @@ export function SafetyCoachView({
     });
   };
 
+  const startNextRound = () => {
+    setRound((prev) => buildRound(prev));
+    setRoundNumber((n) => n + 1);
+    setIndex(0);
+    setStreak(0);
+  };
+
   const chosenAnswer = attempt ? scenario.answers.find((a) => a.id === attempt.answerId) : undefined;
-  const allDone = answered === SCENARIOS.length;
+  const allDone = answered === roundScenarios.length;
+  const mastered = bestStreak >= 5;
 
   return (
     <div className="ww-stack" ref={wrapRef} style={{ position: 'relative' }}>
@@ -94,7 +121,7 @@ export function SafetyCoachView({
             Safety Coach
           </h1>
           <p className="ww-small ww-muted" style={{ margin: '4px 0 0' }}>
-            Build your scam-spotting instinct. Nothing here visits a real site.
+            Round {roundNumber} · {ALL_SCENARIOS.length} challenges in the bank
           </p>
         </div>
       </div>
@@ -106,17 +133,17 @@ export function SafetyCoachView({
         </span>
         <span>{streak > 0 ? `${streak} in a row!` : 'Give it a go'}</span>
         <span className="ww-scoremeter__bar" aria-hidden="true">
-          <span className="ww-scoremeter__fill" style={{ width: `${(solved / SCENARIOS.length) * 100}%` }} />
+          <span className="ww-scoremeter__fill" style={{ width: `${(solved / roundScenarios.length) * 100}%` }} />
         </span>
         <span className="ww-row" style={{ gap: 4 }}>
           <IconStar size={14} />
-          {solved}/{SCENARIOS.length}
+          {solved}/{roundScenarios.length}
         </span>
       </div>
 
-      <Card badge={`${index + 1} of ${SCENARIOS.length}`} icon={<IconCompass size={18} />}>
+      <Card badge={`${index + 1} of ${roundScenarios.length}`} icon={<IconCompass size={18} />}>
         <div className="ww-coach__progress" role="tablist" aria-label="Scenarios">
-          {SCENARIOS.map((s, i) => (
+          {roundScenarios.map((s, i) => (
             <button
               key={s.id}
               type="button"
@@ -131,6 +158,10 @@ export function SafetyCoachView({
               {attempts[s.id]?.correct ? '' : i + 1}
             </button>
           ))}
+        </div>
+
+        <div className="ww-chip-row" style={{ marginBottom: 8 }}>
+          <Pill tone="muted">{CATEGORY_LABELS[scenario.category]}</Pill>
         </div>
 
         <h3 className="ww-card__title" style={{ fontSize: 16, marginBottom: 4 }}>
@@ -196,7 +227,7 @@ export function SafetyCoachView({
               <button type="button" className="ww-btn" onClick={tryAgain}>
                 Try again
               </button>
-              {index < SCENARIOS.length - 1 && (
+              {index < roundScenarios.length - 1 && (
                 <button type="button" className="ww-btn ww-btn--primary" onClick={() => setIndex(index + 1)}>
                   Next scenario
                 </button>
@@ -212,14 +243,37 @@ export function SafetyCoachView({
             <Pip size={48} mood="happy" />
             <div>
               <p className="ww-card__title" style={{ marginBottom: 2 }}>
-                You finished all five challenges!
+                Round {roundNumber} complete!
               </p>
               <p className="ww-small ww-muted" style={{ margin: 0 }}>
-                You solved {solved} of {SCENARIOS.length}. Replay any one any time to keep your instinct sharp.
+                You solved {solved} of {roundScenarios.length}. Best streak: {bestStreak}. Keep going — there are{' '}
+                {ALL_SCENARIOS.length} challenges in total, so the next round will be different.
               </p>
             </div>
           </div>
+          <div className="ww-row" style={{ marginTop: 12, gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="ww-btn ww-btn--primary" onClick={startNextRound}>
+              Play another round
+            </button>
+            <button
+              type="button"
+              className="ww-btn"
+              onClick={() => {
+                setAttempts({});
+                setIndex(0);
+                setStreak(0);
+              }}
+            >
+              Replay this round
+            </button>
+          </div>
         </Card>
+      )}
+
+      {mastered && !allDone && (
+        <p className="ww-footnote">
+          <Pill tone="good">Streak {bestStreak}</Pill> Great spotting! Keep the run going.
+        </p>
       )}
 
       <Card title="Tips for this page" subtitle={context.hostname ? `Based on what we found on ${context.hostname}` : 'General tips'} icon={<IconBulb size={18} />}>

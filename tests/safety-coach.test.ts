@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALL_SCENARIOS,
+  CATEGORY_LABELS,
+  PRACTICE_SCENARIOS,
+  ROUND_SIZE,
   SCENARIOS,
   answerById,
+  buildRound,
   contextualTips,
   isCorrectAnswer,
   scenarioById,
@@ -18,28 +23,114 @@ describe('scenario catalogue', () => {
     expect(SCENARIOS.length).toBeGreaterThanOrEqual(5);
   });
 
+  it('ships a large bank of extra practice scenarios', () => {
+    expect(PRACTICE_SCENARIOS.length).toBeGreaterThanOrEqual(40);
+    expect(ALL_SCENARIOS.length).toBeGreaterThanOrEqual(45);
+  });
+
+  it('has unique ids across the whole bank', () => {
+    const ids = ALL_SCENARIOS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('labels every scenario with a known category', () => {
+    for (const s of ALL_SCENARIOS) {
+      expect(CATEGORY_LABELS[s.category], `scenario ${s.id}`).toBeTruthy();
+    }
+  });
+
   it('gives every scenario exactly one correct answer', () => {
-    for (const s of SCENARIOS) {
+    for (const s of ALL_SCENARIOS) {
       const correct = s.answers.filter((a) => a.correct);
       expect(correct.length, `scenario ${s.id}`).toBe(1);
     }
   });
 
+  it('gives every scenario three answers with unique ids', () => {
+    for (const s of ALL_SCENARIOS) {
+      expect(s.answers.length, `scenario ${s.id}`).toBe(3);
+      expect(new Set(s.answers.map((a) => a.id)).size).toBe(3);
+    }
+  });
+
   it('gives every answer feedback and every scenario a takeaway', () => {
-    for (const s of SCENARIOS) {
-      expect(s.takeaway.length).toBeGreaterThan(20);
+    for (const s of ALL_SCENARIOS) {
+      expect(s.takeaway.length, `scenario ${s.id}`).toBeGreaterThan(20);
       for (const a of s.answers) {
-        expect(a.feedback.length).toBeGreaterThan(30);
+        expect(a.feedback.length, `${s.id}/${a.id}`).toBeGreaterThan(30);
         expect(a.text.length).toBeGreaterThan(5);
       }
     }
   });
 
   it('does not embed real malicious URLs or ask for real credentials', () => {
-    const text = JSON.stringify(SCENARIOS).toLowerCase();
+    const text = JSON.stringify(ALL_SCENARIOS).toLowerCase();
     // Only example.com / example.test style placeholders are allowed.
     expect(text).not.toMatch(/https?:\/\/(?!paypa1-secure-login\.example\.com)[a-z0-9-]+\.(com|net|org|ru|cn)\//);
     expect(text).not.toContain('password:');
+  });
+});
+
+describe('buildRound', () => {
+  it('builds a round of the requested size', () => {
+    const round = buildRound(null);
+    expect(round.scenarioIds.length).toBe(ROUND_SIZE);
+    expect(new Set(round.scenarioIds).size).toBe(ROUND_SIZE);
+  });
+
+  it('uses only the required scenarios in the first round', () => {
+    const required = new Set(SCENARIOS.map((s) => s.id));
+    for (let i = 0; i < 20; i++) {
+      const round = buildRound(null);
+      for (const id of round.scenarioIds) {
+        expect(required.has(id), `round-1 leaked ${id}`).toBe(true);
+      }
+    }
+  });
+
+  it('never repeats a scenario within a round', () => {
+    let prev = buildRound(null);
+    for (let i = 0; i < 50; i++) {
+      const next = buildRound(prev);
+      expect(new Set(next.scenarioIds).size).toBe(next.scenarioIds.length);
+      prev = next;
+    }
+  });
+
+  it('does not reuse a scenario from the previous round', () => {
+    let prev = buildRound(null);
+    for (let i = 0; i < 40; i++) {
+      const next = buildRound(prev);
+      for (const id of next.scenarioIds) {
+        expect(prev.scenarioIds.includes(id), `repeated ${id}`).toBe(false);
+      }
+      prev = next;
+    }
+  });
+
+  it('draws from the wider bank in later rounds, not just the required five', () => {
+    const required = new Set(SCENARIOS.map((s) => s.id));
+    const round = buildRound(buildRound(null));
+    expect(round.scenarioIds.some((id) => !required.has(id))).toBe(true);
+  });
+
+  it('only ever returns ids that exist in the bank', () => {
+    let prev = buildRound(null);
+    for (let i = 0; i < 50; i++) {
+      const next = buildRound(prev);
+      for (const id of next.scenarioIds) {
+        expect(scenarioById(id), `unknown id ${id}`).toBeDefined();
+      }
+      prev = next;
+    }
+  });
+
+  it('varies round order across calls', () => {
+    const orders = new Set<string>();
+    for (let i = 0; i < 30; i++) {
+      orders.add(buildRound(null).scenarioIds.join(','));
+    }
+    expect(orders.size).toBeGreaterThan(1);
   });
 });
 

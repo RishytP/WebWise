@@ -170,8 +170,19 @@ export interface CoachAnswer {
   feedback: string;
 }
 
+export type CoachCategory =
+  | 'links'
+  | 'downloads'
+  | 'passwords'
+  | 'popups'
+  | 'privacy'
+  | 'shopping'
+  | 'social';
+
 export interface CoachScenario {
   id: string;
+  /** Topic group, used to label a scenario and to keep rounds varied. */
+  category: CoachCategory;
   title: string;
   /** One-line setup. */
   intro: string;

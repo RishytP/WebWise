@@ -77,7 +77,8 @@ WebWise takes the opposite approach: show the real evidence, explain what it doe
 
 ### C. Safety Coach — interactive learning
 
-- Five scenarios: recognising a suspicious URL, an unexpected download, a notification request, a fake login page, and a message asking for passwords or verification codes.
+- **50 scenarios** covering links and addresses, unexpected downloads, pop-ups and permission requests, fake logins, password and code requests, privacy, shopping and messages. The five original topics are always in the first round; later rounds are drawn from the wider bank.
+- Scenarios are grouped into **rounds of five**. Finishing a round offers "Play another round", which builds a fresh set, preferring topics you have not just seen so consecutive rounds feel different.
 - Each has a realistic but **invented, safe** example, a question, selectable answers, targeted feedback, a practical takeaway and a "try again" button.
 - A contextual tip system that produces tips **only when the underlying finding is present** (third-party cookies, HttpOnly cookies, persistent cookies, granted camera/location, notification prompts).
 - A deliberate "how to judge a website" note that discourages treating every site as dangerous.
@@ -307,6 +308,8 @@ Covers:
 - Background worker report builders against a **mocked** `chrome` API: real-metadata path, empty state, thrown-error path and restricted-page path.
 - Runtime message validation.
 - Safety Coach answer validation, feedback, and contextual tip generation.
+- The full 50-scenario bank: unique ids, one correct answer each, three answers each, feedback and takeaway present, and no real URLs or credentials.
+- Round building: round-one uses the required five, rounds never repeat a scenario or reuse the previous round's scenarios, later rounds draw from the wider bank, and only real ids are returned.
 - "Know the Web" toolkit content: shape, unique ids, a concrete action per topic, and a guard that it never claims a site is simply "safe".
 - Empty and error states, and restricted-page handling.
 

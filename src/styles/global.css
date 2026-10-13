@@ -966,12 +966,19 @@ h4 {
   width: var(--ww-ring-size);
   height: var(--ww-ring-size);
   flex: none;
-  display: grid;
-  place-items: center;
   margin: 0 auto;
 }
+.ww-ring svg {
+  display: block;
+}
 .ww-ring__hole {
-  position: relative;
+  /* Absolutely centred over the ring. Do NOT make .ww-ring a grid with the
+     svg and hole as siblings: they would occupy two rows and push the hole
+     (and its caption) below the ring, where it collides with the chip row. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 64%;
   height: 64%;
   border-radius: 50%;
