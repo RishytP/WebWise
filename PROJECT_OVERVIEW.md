@@ -15,7 +15,7 @@ Children browse with powerful tools and almost no honest instruction. Most safet
 | **Overview** | Hostname, protocol, cookie summary, permission summary, matched tips, and what could not be inspected | Recomputed from the two reports below |
 | **Cookie Detective** | Cookies that apply to the current page, with attribute explanations and first/third-party classification | `chrome.cookies.getAll({ url })` |
 | **Permission Guide** | Location, camera, microphone, notifications and more, as Allowed / Blocked / Ask first / Not available / Unknown | `navigator.permissions` via a `chrome.scripting.executeScript` probe |
-| **Safety Coach** | Rounds of five scenarios drawn from a 50-scenario bank, plus tips matched to real findings | Local content, no network |
+| **Safety Coach** | Rounds of five scenarios drawn from a 50-scenario bank, plus tips matched to real findings, and opt-in local progress memory | Local content; `chrome.storage.local` only when remembering is switched on |
 
 ## What it deliberately does not do
 

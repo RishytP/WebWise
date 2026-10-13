@@ -211,6 +211,43 @@ try {
   if (w < 320) throw new Error(`Popup collapsed to a thin rod (width ${w}px)`);
   console.log('[it] PASS: popup keeps a usable width when the viewport is narrow');
 
+  // ---- Opt-in Coach progress memory ---------------------------------------
+  await psend('Emulation.clearDeviceMetricsOverride');
+  const coachEval = (expression) =>
+    psend('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }).then((r) => r.result?.value);
+  await coachEval(`[...document.querySelectorAll('.ww-nav__item')].find(x=>/coach/i.test(x.textContent||''))?.click()`);
+  await wait(700);
+  const initialSwitch = await coachEval(
+    `document.querySelector('.ww-switch')?.classList.contains('ww-switch--on')`,
+  );
+  if (initialSwitch !== false) throw new Error('Progress memory should be off by default');
+
+  await coachEval(`document.querySelector('.ww-switch')?.click()`);
+  await wait(400);
+  await coachEval(`document.querySelector('.ww-answer')?.click()`);
+  await wait(400);
+  const storedProgress = await coachEval(
+    `chrome.storage.local.get('coachProgress').then(r => r.coachProgress ? r.coachProgress.scenarioIds.length : null)`,
+  );
+  console.log(`[it] coach progress saved to chrome.storage.local: ${storedProgress} scenario(s)`);
+  if (!storedProgress) throw new Error('Opting in did not save progress to chrome.storage.local');
+
+  await psend('Page.reload');
+  await wait(1800);
+  await coachEval(`[...document.querySelectorAll('.ww-nav__item')].find(x=>/coach/i.test(x.textContent||''))?.click()`);
+  await wait(700);
+  const restored = await coachEval(`/Picked up where you left off/.test(document.body.innerText)`);
+  console.log(`[it] progress restored after popup reload: ${restored}`);
+  if (!restored) throw new Error('Saved Coach progress was not restored after reload');
+
+  await coachEval(`document.querySelector('.ww-switch')?.click()`);
+  await wait(400);
+  const afterOff = await coachEval(
+    `chrome.storage.local.get(['coachProgress','coachProgressOptIn']).then(r => ({ p: r.coachProgress ?? null, o: r.coachProgressOptIn ?? null }))`,
+  );
+  if (afterOff?.p !== null || afterOff?.o !== null) throw new Error('Turning the toggle off did not forget saved progress');
+  console.log('[it] PASS: opt-in progress memory saves, restores and forgets correctly');
+
   pws.close();
 } catch (e) {
   console.error('[it] FAIL:', e.message);

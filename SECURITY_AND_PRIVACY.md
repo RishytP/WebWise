@@ -15,19 +15,21 @@ WebWise is local-first by construction. It has **no backend, no database, no acc
 | Cookie **values** | `chrome.cookies` object | **Discarded immediately** by `toCookieRecord`; never stored, shown or sent | Nothing |
 | Permission **status strings** | `navigator.permissions.query` inside the page | Mapped to Allowed / Blocked / Ask first / etc. | Nothing |
 | Page content | — | **Never read.** The probe returns only a status string | Nothing |
+| Safety Coach progress (opt-in only) | Your answers to invented scenarios | Stored in `chrome.storage.local` **only when "Remember my progress" is on**, so a round can be resumed | Nothing |
 
-There is no persistence layer at all. The `storage` permission is not requested.
+The only persistence is the opt-in Coach progress record. It is off by default, contains no names, no URLs and no browsing history, and is deleted the moment the toggle is switched off.
 
 ## 3. Permission minimisation
 
-The manifest declares exactly four capabilities, each traceable to code:
+The manifest declares exactly five capabilities, each traceable to code:
 
 - `cookies` — Cookie Detective.
 - `tabs` — Overview (active tab only).
 - `scripting` — Permission Guide probe.
+- `storage` — the **opt-in** Safety Coach progress record, used only after the learner turns remembering on.
 - `host_permissions: http://*/*, https://*/*` — required for `scripting.executeScript` to run the probe on a page.
 
-Deliberately **absent**: `storage`, `history`, `bookmarks`, `downloads`, `management`, `webRequest`, `activeTab`, and any remote host. An initial draft included `storage`; it was removed once no code referenced it.
+Deliberately **absent**: `history`, `bookmarks`, `downloads`, `management`, `webRequest`, `activeTab`, and any remote host. `storage` was added only once the opt-in progress feature genuinely needed it; nothing is written unless the learner opts in.
 
 ## 4. The service-worker boundary
 

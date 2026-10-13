@@ -81,6 +81,7 @@ WebWise takes the opposite approach: show the real evidence, explain what it doe
 - Scenarios are grouped into **rounds of five**. Finishing a round offers "Play another round", which builds a fresh set, preferring topics you have not just seen so consecutive rounds feel different.
 - Each has a realistic but **invented, safe** example, a question, selectable answers, targeted feedback, a practical takeaway and a "try again" button.
 - A contextual tip system that produces tips **only when the underlying finding is present** (third-party cookies, HttpOnly cookies, persistent cookies, granted camera/location, notification prompts).
+- **Optional progress memory (opt-in).** A "Remember my progress" switch, off by default, saves the current round locally so you can close the popup and continue later. It stores only which invented scenarios you answered. Switching it off forgets everything immediately.
 - A deliberate "how to judge a website" note that discourages treating every site as dangerous.
 
 ### D. Website overview
@@ -268,9 +269,10 @@ WebWise keeps its permission list deliberately short. Each one maps to a feature
 | `cookies` | Cookie Detective | Read cookie **metadata** that applies to the active page. | Values are discarded immediately; nothing is stored or sent. |
 | `tabs` | Overview | Identify the active tab's URL and title so we know which site to describe. | Only the active tab is queried; history is never read. |
 | `scripting` | Permission Guide | Run a tiny probe in the page to read `navigator.permissions` status. | The probe is self-contained, returns only a state string, and never touches page data. |
+| `storage` | Safety Coach (opt-in) | Save your Coach round locally **only when you switch "Remember my progress" on**. | Stores one small record in `chrome.storage.local`, on your device only. It holds no names, no URLs and no browsing history, and is deleted the moment you switch the toggle off. |
 | `host_permissions: http://*/* , https://*/*` | Permission Guide | `scripting.executeScript` needs host access to run the probe on a page. | Access is used only to query permissions; no page content is read, stored or transmitted. |
 
-**Deliberately not requested:** `storage` (nothing is persisted), `history`, `bookmarks`, `downloads`, `management`, `webRequest`, `activeTab`, and any remote-host permission. The permission set was reduced from an initial draft once each candidate was traced to actual code.
+**Deliberately not requested:** `history`, `bookmarks`, `downloads`, `management`, `webRequest`, `activeTab`, and any remote-host permission. The permission set was reduced from an initial draft once each candidate was traced to actual code.
 
 ## Privacy and security design
 
@@ -281,7 +283,7 @@ WebWise is built so that "we cannot leak your data" is a structural property, no
 3. **Cookie values never leave the worker.** `toCookieRecord` maps a `chrome.cookies.Cookie` to a value-free record; a unit test asserts the serialised record cannot contain the value.
 4. **Untrusted input is not rendered.** The UI uses React (no `dangerouslySetInnerHTML`). All interpolated content is plain text.
 5. **Message passing is validated.** The worker ignores anything that fails `isWorkerRequest`, so a stray web-page message cannot make it act.
-6. **No personal data.** WebWise never asks for or stores names, emails, precise location or any identifier.
+6. **No personal data.** WebWise never asks for or stores names, emails, precise location or any identifier. The only thing it can persist is an opt-in Coach progress record, which holds nothing but which invented scenarios you answered.
 7. **Minimal permissions** (see above), each documented and traceable to code.
 8. **A strict CSP** (`script-src 'self'; object-src 'self'`) is declared in the manifest.
 9. **Graceful failure.** Permission denial, protected pages and API errors produce honest "unsupported"/"unknown" states, never a fabricated result.
@@ -310,6 +312,7 @@ Covers:
 - Safety Coach answer validation, feedback, and contextual tip generation.
 - The full 50-scenario bank: unique ids, one correct answer each, three answers each, feedback and takeaway present, and no real URLs or credentials.
 - Round building: round-one uses the required five, rounds never repeat a scenario or reuse the previous round's scenarios, later rounds draw from the wider bank, and only real ids are returned.
+- Opt-in progress memory against a mocked `chrome.storage.local`: off by default, saves only when opted in, turning it off forgets the data, corrupt stored records are ignored, and a missing or failing storage API degrades gracefully.
 - "Know the Web" toolkit content: shape, unique ids, a concrete action per topic, and a guard that it never claims a site is simply "safe".
 - Empty and error states, and restricted-page handling.
 

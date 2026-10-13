@@ -200,3 +200,28 @@ export interface CoachScenario {
 /* -------------------------------------------------------------------------- */
 
 export type ViewId = 'overview' | 'cookies' | 'permissions' | 'coach' | 'learn';
+
+/* -------------------------------------------------------------------------- */
+/* Optional, opt-in progress memory                                           */
+/* -------------------------------------------------------------------------- */
+
+export interface CoachAttemptRecord {
+  answerId: string;
+  correct: boolean;
+}
+
+/**
+ * A saved Safety Coach round. Written to chrome.storage.local ONLY when the
+ * learner switches on "Remember my progress". It holds no personal data, no
+ * URLs and no browsing history — just which invented scenarios were answered.
+ */
+export interface CoachProgress {
+  version: 1;
+  savedAt: number;
+  roundNumber: number;
+  roundId: string;
+  scenarioIds: string[];
+  index: number;
+  attempts: Record<string, CoachAttemptRecord>;
+  bestStreak: number;
+}

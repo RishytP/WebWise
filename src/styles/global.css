@@ -1540,6 +1540,67 @@ h4 {
   color: var(--ww-ink-faint);
 }
 
+/* Opt-in toggle (Safety Coach progress memory) */
+.ww-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--ww-radius-md);
+  border: var(--ww-border);
+  background: #fff;
+  color: var(--ww-ink);
+  font: inherit;
+  font-weight: 800;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s var(--ww-ease-pop), background 0.16s ease, border-color 0.16s ease;
+}
+.ww-switch:hover {
+  transform: translateY(-1px);
+}
+.ww-switch--on {
+  background: var(--ww-green-wash);
+  border-color: var(--ww-ink);
+  box-shadow: var(--ww-shadow-hard-sm);
+  transform: translate(-1px, -1px);
+}
+.ww-switch__track {
+  flex: none;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: var(--ww-radius-pill);
+  border: 2px solid var(--ww-ink);
+  background: var(--ww-paper-deep);
+  transition: background 0.18s ease;
+}
+.ww-switch--on .ww-switch__track {
+  background: var(--ww-green);
+}
+.ww-switch__thumb {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--ww-ink);
+  transform: translateY(-50%);
+  transition: left 0.18s var(--ww-ease-pop);
+}
+.ww-switch--on .ww-switch__thumb {
+  left: 20px;
+}
+.ww-switch__label {
+  flex: 1;
+  min-width: 0;
+}
+
 .ww-local-badge {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState, type ReactElement } from 'react';
-import type { CookieReport, PageContext, PermissionReport } from '../../types';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import type { CoachAttemptRecord, CookieReport, PageContext, PermissionReport } from '../../types';
 import {
   ALL_SCENARIOS,
   CATEGORY_LABELS,
@@ -9,6 +9,13 @@ import {
   scenarioById,
   type CoachRound,
 } from './scenarios';
+import {
+  clearCoachProgress,
+  isProgressOptedIn,
+  loadCoachProgress,
+  saveCoachProgress,
+  setProgressOptedIn,
+} from '../../services/progressService';
 import { Card, Confetti, Pill } from '../../popup/components/Primitives';
 import {
   Pip,
@@ -20,10 +27,7 @@ import {
   IconAlert,
 } from '../../popup/components/Icons';
 
-interface Attempt {
-  answerId: string;
-  correct: boolean;
-}
+type Attempt = CoachAttemptRecord;
 
 export function SafetyCoachView({
   context,
@@ -41,7 +45,51 @@ export function SafetyCoachView({
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
+  const [remember, setRemember] = useState(false);
+  const [restored, setRestored] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Read the opt-in flag and any saved round once, on mount. Nothing is loaded
+  // unless the learner has explicitly switched remembering on.
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const optedIn = await isProgressOptedIn();
+      if (!active) return;
+      setRemember(optedIn);
+      if (optedIn) {
+        const saved = await loadCoachProgress();
+        if (!active || !saved) return;
+        const ids = saved.scenarioIds.filter((id) => scenarioById(id));
+        if (ids.length === 0) return;
+        setRound({ id: saved.roundId, scenarioIds: ids });
+        setRoundNumber(saved.roundNumber);
+        setAttempts(saved.attempts);
+        setBestStreak(saved.bestStreak);
+        setIndex(Math.min(Math.max(saved.index, 0), ids.length - 1));
+        setRestored(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Persist whenever the round, position or answers change — but only while
+  // remembering is on.
+  useEffect(() => {
+    if (!remember) return;
+    void saveCoachProgress({
+      version: 1,
+      savedAt: Date.now(),
+      roundNumber,
+      roundId: round.id,
+      scenarioIds: round.scenarioIds,
+      index,
+      attempts,
+      bestStreak,
+    });
+  }, [remember, round, roundNumber, index, attempts, bestStreak]);
 
   const roundScenarios = useMemo(
     () => round.scenarioIds.map((id) => scenarioById(id)).filter((s): s is NonNullable<typeof s> => Boolean(s)),
@@ -104,6 +152,17 @@ export function SafetyCoachView({
     setRoundNumber((n) => n + 1);
     setIndex(0);
     setStreak(0);
+    setRestored(false);
+  };
+
+  const toggleRemember = async () => {
+    const next = !remember;
+    setRemember(next);
+    await setProgressOptedIn(next);
+    if (!next) {
+      await clearCoachProgress();
+      setRestored(false);
+    }
   };
 
   const chosenAnswer = attempt ? scenario.answers.find((a) => a.id === attempt.answerId) : undefined;
@@ -140,6 +199,37 @@ export function SafetyCoachView({
           {solved}/{roundScenarios.length}
         </span>
       </div>
+
+      {restored && (
+        <p className="ww-footnote">
+          <Pill tone="info">Picked up where you left off</Pill> Your last round was saved on this device.
+        </p>
+      )}
+
+      <Card title="Remember my progress" subtitle="Off by default" icon={<IconInfo size={18} />}>
+        <p className="ww-perm__text">
+          When this is on, WebWise saves your current Coach round on this device so you can close the popup and carry on
+          later. It stores only which practice scenarios you answered — no names, no websites, no browsing history.
+        </p>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={remember}
+          className={`ww-switch${remember ? ' ww-switch--on' : ''}`}
+          onClick={() => void toggleRemember()}
+        >
+          <span className="ww-switch__track" aria-hidden="true">
+            <span className="ww-switch__thumb" />
+          </span>
+          <span className="ww-switch__label">
+            {remember ? 'Saved on this device' : 'Not saved — progress resets when the popup closes'}
+          </span>
+        </button>
+        <p className="ww-small ww-muted" style={{ margin: '10px 0 0' }}>
+          Turning this off immediately forgets anything already saved. WebWise has no account and never sends this
+          anywhere.
+        </p>
+      </Card>
 
       <Card badge={`${index + 1} of ${roundScenarios.length}`} icon={<IconCompass size={18} />}>
         <div className="ww-coach__progress" role="tablist" aria-label="Scenarios">
