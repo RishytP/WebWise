@@ -193,6 +193,24 @@ try {
   if (consoleErrors.length > 0) throw new Error(`Popup produced console errors: ${consoleErrors.join(' | ')}`);
   console.log('[it] PASS: popup UI mounted with no console errors');
 
+  // The popup must keep a real width even when Chrome's initial popup viewport
+  // is tiny. Shrink the viewport and confirm #root does not collapse to a rod.
+  await psend('Emulation.setDeviceMetricsOverride', {
+    width: 60,
+    height: 60,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await wait(300);
+  const { result: box } = await psend('Runtime.evaluate', {
+    expression: `(() => { const r = document.getElementById('root').getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; })()`,
+    returnByValue: true,
+  });
+  const w = box.value?.w ?? 0;
+  console.log(`[it] popup #root size at a 60px viewport: ${w}x${box.value?.h}`);
+  if (w < 320) throw new Error(`Popup collapsed to a thin rod (width ${w}px)`);
+  console.log('[it] PASS: popup keeps a usable width when the viewport is narrow');
+
   pws.close();
 } catch (e) {
   console.error('[it] FAIL:', e.message);
